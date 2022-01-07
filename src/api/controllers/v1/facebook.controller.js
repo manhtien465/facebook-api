@@ -14,3 +14,15 @@ exports.confirm = async (req, res, next) => {
         return ErrorHandler(ex, req, res, next);
     }
 };
+
+/**
+ * receive
+ */
+exports.recieve = async (req, res, next) => {
+    try {
+        console.log(req.body);
+        return res.status(200).send({ messagge: 'ok' });
+    } catch (ex) {
+        return ErrorHandler(ex, req, res, next);
+    }
+};

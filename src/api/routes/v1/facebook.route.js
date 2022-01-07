@@ -15,4 +15,9 @@ router
         validate(confirm),
         controller.confirm
     );
+router
+    .route('/')
+    .post(
+        controller.recieve
+    );
 export default router;
