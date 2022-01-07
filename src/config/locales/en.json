@@ -31,5 +31,6 @@
 	"column \"productid\" does not exist": "column \"productid\" does not exist",
 	"function report_service.product_report_staff_specific(unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown) does not exist": "function report_service.product_report_staff_specific(unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown) does not exist",
 	"_productReport2.default.sumByStockStaffSpecific is not a function": "_productReport2.default.sumByStockStaffSpecific is not a function",
-	"_productReport2.default.sumByStockSupplierSpecific is not a function": "_productReport2.default.sumByStockSupplierSpecific is not a function"
+	"_productReport2.default.sumByStockSupplierSpecific is not a function": "_productReport2.default.sumByStockSupplierSpecific is not a function",
+	"Cannot read property 'challenge' of undefined": "Cannot read property 'challenge' of undefined"
 }
