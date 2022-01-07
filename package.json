@@ -21,7 +21,7 @@
         "precommit": "yarn lint",
         "clean": "./node_modules/.bin/rimraf dist -p",
         "build": "yarn run clean && mkdir -p dist && ./node_modules/.bin/babel src -s -D -d dist",
-        "start": "cross-env NODE_ENV=production pm2 start ./dist/index.js",
+        "start": "nodemon src/index.js --exec ./node_modules/.bin/babel-node",
         "start-worker": "cross-env NODE_ENV=production pm2 start docker-process.yml --only worker",
         "start-event-dispatcher": "cross-env NODE_ENV=production pm2 start docker-process.yml --only event-dispatcher",
         "dev": "nodemon src/index.js --exec ./node_modules/.bin/babel-node",
