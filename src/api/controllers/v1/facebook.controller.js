@@ -21,12 +21,17 @@ exports.confirm = async (req, res, next) => {
 exports.recieve = async (req, res, next) => {
     const body = req.body;
     console.log('đã có webhook');
-    console.log(req.body);
+
     // Checks this is an event from a page subscription
     if (body.object === 'page') {
     // Iterates over each entry - there may be multiple if batched
         body.entry.forEach((entry) => {
-            console.log(entry);
+            if (entry.value && entry.value.length > 0) {
+                entry.value.map((v) => {
+                    console.log(v);
+                    return null;
+                });
+            }
         });
     }
     // Returns a '200 OK' response to all requests
