@@ -20,7 +20,8 @@ exports.confirm = async (req, res, next) => {
  */
 exports.recieve = async (req, res, next) => {
     try {
-        console.log(req.body);
+        console.log(req.body.entry);
+        console.log(req.body.entry[0].changes);
         return res.status(200).send({ messagge: 'ok' });
     } catch (ex) {
         return ErrorHandler(ex, req, res, next);
