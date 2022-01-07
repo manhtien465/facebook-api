@@ -26,6 +26,7 @@ exports.recieve = async (req, res, next) => {
     if (body.object === 'page') {
     // Iterates over each entry - there may be multiple if batched
         body.entry.forEach((entry) => {
+            console.log(entry);
             if (entry.value && entry.value.length > 0) {
                 entry.value.map((v) => {
                     console.log(v);
