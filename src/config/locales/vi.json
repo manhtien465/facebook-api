@@ -1,0 +1,10 @@
+{
+	"Not found!": "Không tìm thấy!",
+	"Unauthorized": "Lỗi xác thực!",
+	"Validation Error!": "Dữ liệu đầu vào lỗi!",
+	"relation \"product_service.tbl_users\" does not exist": "relation \"product_service.tbl_users\" does not exist",
+	"operator does not exist: numeric * text": "operator does not exist: numeric * text",
+	"structure of query does not match function result type": "structure of query does not match function result type",
+	"division by zero": "division by zero",
+	"argument of CASE/WHEN must be type boolean, not type numeric": "argument of CASE/WHEN must be type boolean, not type numeric"
+}

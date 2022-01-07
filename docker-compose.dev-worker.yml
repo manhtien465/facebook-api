@@ -1,0 +1,6 @@
+version: "2"
+services:
+    sv-backend-report:
+        environment:
+            - NODE_ENV=development        
+        command: yarn dev-worker -- -L

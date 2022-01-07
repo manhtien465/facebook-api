@@ -1,0 +1,97 @@
+image: docker:latest
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy
+
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  KUBECONFIG: /etc/deploy/config
+  NAMESPACE: sv-production
+  APP_NAME: sv-backend-report
+
+build:
+  stage: build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+    - docker pull $IMAGE_TAG-builder || echo "Building builder from scratch"
+    - docker pull $IMAGE_TAG || echo "Building runtime from scratch"
+    - >
+      docker build 
+      --target=builder 
+      --cache-from $IMAGE_TAG-builder 
+      -t $IMAGE_TAG-builder .
+    - >
+      docker build
+      --cache-from $IMAGE_TAG 
+      --cache-from $IMAGE_TAG-builder
+      --build-arg GIT_COMMIT_TAG="$CI_COMMIT_SHA $(TZ=':Asia/Ho_Chi_Minh' date)"
+      -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG-builder
+    - docker push $IMAGE_TAG
+  only:
+    - dev
+    # - master
+
+deploy_dev:
+  stage: deploy
+  image: thanhnguyenit/docker-helm
+  environment:
+    name: development
+  before_script:
+    - mkdir -p /etc/deploy
+    - eval ${DEV_GET_KUBECONFIG} > ${KUBECONFIG}
+    - helm init --client-only
+    # Escape URI    
+    - export DEV_MONGO_URI=$(echo ${DEV_MONGO_URI} | sed -e "s/\,/\\\,/g" - ) 
+    - export DEV_MONGO_URI_TESTS=$(echo ${DEV_MONGO_URI_TESTS} | sed -e "s/\,/\\\,/g" - ) 
+    - export DEV_RABBITMQ_URI=$(echo ${DEV_RABBITMQ_URI} | sed -e "s/\,/\\\,/g" - ) 
+    - export DEV_REDIS_URI=$(echo ${DEV_REDIS_URI} | sed -e "s/\,/\\\,/g" - ) 
+  script:
+    - >
+      helm upgrade --install
+      --namespace=${NAMESPACE} 
+      --set "mongo.uri=${DEV_MONGO_URI}"
+      --set "mongo.uriTest=${DEV_MONGO_URI_TESTS}"
+      --set "rabbitmq.uri=${DEV_RABBITMQ_URI}"
+      --set "redis.uri=${DEV_REDIS_URI}"
+      --set "commitSha=${CI_COMMIT_SHA}"
+      --set "image.repository=${CI_REGISTRY_IMAGE}"
+      --set "image.tag=${CI_COMMIT_REF_NAME}"
+      --set "replicaCount=1"
+      --set "worker.replicaCount=1"
+      --set "eventDispatcher.replicaCount=1"
+      ${APP_NAME} ./deploy/helm
+  only:
+    - dev
+
+# deploy_prod:
+#   stage: deploy
+#   image: thanhnguyenit/docker-helm
+#   environment:
+#     name: production
+#   before_script:
+#     - mkdir -p /etc/deploy
+#     - echo ${KUBE_CONFIG} | base64 -d > ${KUBECONFIG}
+#     - helm init --client-only
+#     # Escape URI    
+#     - export MONGO_URI=$(echo ${MONGO_URI} | sed -e "s/\,/\\\,/g" - ) 
+#     - export MONGO_URI_TESTS=$(echo ${MONGO_URI_TESTS} | sed -e "s/\,/\\\,/g" - ) 
+#     - export RABBITMQ_URI=$(echo ${RABBITMQ_URI} | sed -e "s/\,/\\\,/g" - ) 
+#     - export REDIS_URI=$(echo ${REDIS_URI} | sed -e "s/\,/\\\,/g" - ) 
+#   script:
+#     - >
+#       helm upgrade --install
+#       --namespace=${NAMESPACE} 
+#       --set "mongo.uri=${MONGO_URI}"
+#       --set "mongo.uriTest=${MONGO_URI_TESTS}"
+#       --set "rabbitmq.uri=${RABBITMQ_URI}"
+#       --set "redis.uri=${REDIS_URI}"
+#       --set "commitSha=${CI_COMMIT_SHA}"
+#       --set "image.repository=${CI_REGISTRY_IMAGE}"
+#       --set "image.tag=${CI_COMMIT_REF_NAME}"
+#       ${APP_NAME} ./deploy/helm
+#   only:
+#     - master
