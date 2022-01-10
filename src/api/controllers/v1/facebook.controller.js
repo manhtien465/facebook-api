@@ -34,6 +34,17 @@ exports.recieve = async (req, res, next) => {
             }
         });
     }
+    if (body.object === 'user') {
+        // Iterates over each entry - there may be multiple if batched
+        body.entry.forEach((entry) => {
+            if (entry.changed_fields && entry.changed_fields.length > 0) {
+                entry.changed_fields.map((v) => {
+                    console.log(v);
+                    return null;
+                });
+            }
+        });
+    }
     // Returns a '200 OK' response to all requests
     res.status(200).send('EVENT_RECEIVED');
     // } else {
