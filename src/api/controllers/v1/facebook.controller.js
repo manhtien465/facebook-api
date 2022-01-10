@@ -35,11 +35,12 @@ exports.recieve = async (req, res, next) => {
         });
     }
     if (body.object === 'user') {
+        console.log('run in usser');
         // Iterates over each entry - there may be multiple if batched
         body.entry.forEach((entry) => {
             if (entry.changed_fields && entry.changed_fields.length > 0) {
                 entry.changed_fields.map((v) => {
-                    console.log(v);
+                    console.log('ben trong', v);
                     return null;
                 });
             }
