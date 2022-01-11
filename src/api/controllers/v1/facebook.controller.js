@@ -32,9 +32,28 @@ exports.recieve = async (req, res, next) => {
                     return null;
                 });
             }
+            if (entry.messaging && entry.messaging.length > 0) {
+                entry.messaging.map((v) => {
+                    console.log(v);
+                    return null;
+                });
+            }
         });
     }
     if (body.object === 'user') {
+        console.log('run in usser');
+        // Iterates over each entry - there may be multiple if batched
+        body.entry.forEach((entry) => {
+            console.log(entry);
+            if (entry.changed_fields && entry.changed_fields.length > 0) {
+                entry.changed_fields.map((v) => {
+                    console.log('ben trong', v);
+                    return null;
+                });
+            }
+        });
+    }
+    if (body.object === 'feed') {
         console.log('run in usser');
         // Iterates over each entry - there may be multiple if batched
         body.entry.forEach((entry) => {
