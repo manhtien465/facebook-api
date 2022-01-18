@@ -1,5 +1,14 @@
 import { handler as ErrorHandler } from '../../middlewares/error';
 
+
+exports.listPost = async (req, res, next) => {
+    try {
+        return res.status(200).send(req.query['hub.challenge']);
+    } catch (ex) {
+        return ErrorHandler(ex, req, res, next);
+    }
+};
+
 /**
  * confirm
  *
