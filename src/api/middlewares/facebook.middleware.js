@@ -14,7 +14,8 @@ exports.loadPost = async (req, res, next) => {
     const { provider } = req.locals;
     const posts = await facebookAdapter.getPost({
         access_token: provider.access_token,
-        ...req.query
+        limit: req.query.limit,
+        skip: req.query.skip
     });
     req.locals = req.locals ? req.locals : {};
     req.locals.posts = posts;
