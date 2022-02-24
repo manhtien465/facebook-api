@@ -12,93 +12,68 @@ import { serviceName } from '../../config/vars';
 /**
  * Create connection
  */
-class ProviderService extends Model { }
+class ProviderServiceHistory extends Model { }
 const { sequelize } = postgres;
 
 const PUBLIC_FIELDS = [
-    'name',
     'group',
-    'secret',
+    'provider',
+    'transaction',
+    'status_name',
     'status',
-    'status_name'
 ];
 
-ProviderService.Groups = {
-    GHN: 'ghn',
-    GHTK: 'ghtk',
-    AHAMOVE: 'ahamove',
-    ZALO: 'zalo',
-    APPLE: 'apple',
-    FACEBOOK: 'facebook',
-    GOOGLE: 'google',
-    VNPAY: 'vnpay',
-    MOMO: 'momo',
-    SHOPEE: 'shopee'
-};
-
-ProviderService.Statuses = {
-    ACTIVE: 'active',
-    INACTIVE: 'inactive',
+ProviderServiceHistory.Statuses = {
     PENDING: 'pending',
     SUCCESS: 'success',
-    FAILURE: 'failure',
-    // CHECK_PRODUCT: 'check_product'
+    FAILURE: 'failure'
 };
 
-ProviderService.NameStatuses = {
-    ACTIVE: 'Đang hoạt động',
-    INACTIVE: 'Ngừng hoạt động',
+ProviderServiceHistory.NameStatuses = {
     PENDING: 'Đang xử lý',
     SUCCESS: 'Xử lý thành công',
-    FAILURE: 'Xử lý thất bại',
-    // CHECK_PRODUCT: 'Kiểm tra sản phẩm'
+    FAILURE: 'Xử lý thất bại'
 };
 
-ProviderService.SecretStatuses = {
-    CHECK_PRODUCT: 'check_product',
-    SUCCESS_PRODUCT: 'success_product'
+ProviderServiceHistory.Groups = {
+    TIKTOK: 'tiktok',
+    FACEBOOK: 'facebook',
+    INSTAGRAM: 'instagram'
 };
-
-ProviderService.SecretNameStatuses = {
-    CHECK_PRODUCT: 'Kiểm tra sản phẩm',
-    SUCCESS_PRODUCT: 'Thành công sản phẩm'
-};
-
 
 /**
- * Provider Service Schema
+ * Delivery Service Schema
  * @public
  */
-ProviderService.init(
+ProviderServiceHistory.init(
     {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true
         },
-        name: {
-            type: DataTypes.STRING(100),
-            allowNull: false
-        },
         group: {
             type: DataTypes.STRING(50),
-            values: values(ProviderService.Groups),
             allowNull: false
         },
-        secret: {
-            // gồm các app_id, token, secret ... tùy vào từng đối tác
+        social_network_campaign_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        transaction: {
+            // field: 'id, code'
             type: DataTypes.JSONB,
             allowNull: false
         },
         status: {
-            type: DataTypes.STRING(50),
-            values: values(ProviderService.Statuses),
-            allowNull: false
+            type: DataTypes.STRING(10),
+            values: values(ProviderServiceHistory.Statuses),
+            defaultValue: ProviderServiceHistory.Statuses.PENDING,
         },
         status_name: {
-            type: DataTypes.STRING(100),
-            values: values(ProviderService.NameStatuses),
-            allowNull: false
+            type: DataTypes.STRING(50),
+            values: values(ProviderServiceHistory.NameStatuses),
+            defaultValue: ProviderServiceHistory.NameStatuses.PENDING,
         },
 
         // manager
@@ -127,20 +102,20 @@ ProviderService.init(
         timestamps: false,
         sequelize: sequelize,
         schema: serviceName,
-        modelName: 'provider_service',
-        tableName: 'tbl_provider_services'
+        modelName: 'provider_service_history',
+        tableName: 'tbl_provider_service_histories'
     }
 );
 
 /**
  * Register event emiter
  */
-ProviderService.Events = {
-    PROVIDER_SERVICE_CREATED: `${serviceName}.provider-service.created`,
-    PROVIDER_SERVICE_UPDATED: `${serviceName}.provider-service.updated`,
-    PROVIDER_SERVICE_DELETED: `${serviceName}.provider-service.deleted`,
+ProviderServiceHistory.Events = {
+    PROVIDER_SERVICE_HISTORY_CREATED: `${serviceName}.provider-service-history.created`,
+    PROVIDER_SERVICE_HISTORY_UPDATED: `${serviceName}.provider-service-history.updated`,
+    PROVIDER_SERVICE_HISTORY_DELETED: `${serviceName}.provider-service-history.deleted`
 };
-ProviderService.EVENT_SOURCE = `${serviceName}.provider-service`;
+ProviderServiceHistory.EVENT_SOURCE = `${serviceName}.provider-service-history`;
 
 /**
  * Add your
@@ -148,16 +123,16 @@ ProviderService.EVENT_SOURCE = `${serviceName}.provider-service`;
  * - validations
  * - virtuals
  */
-ProviderService.addHook('afterCreate', (model) => {
-    eventBus.emit(ProviderService.Events.PROVIDER_SERVICE_CREATED, model);
+ProviderServiceHistory.addHook('afterCreate', (model) => {
+    eventBus.emit(ProviderServiceHistory.Events.PROVIDER_SERVICE_HISTORY_CREATED, model);
 });
 
-ProviderService.addHook('afterUpdate', (model) => {
-    eventBus.emit(ProviderService.Events.PROVIDER_SERVICE_UPDATED, model);
+ProviderServiceHistory.addHook('afterUpdate', (model) => {
+    eventBus.emit(ProviderServiceHistory.Events.PROVIDER_SERVICE_HISTORY_UPDATED, model);
 });
 
-ProviderService.addHook('afterDestroy', (model) => {
-    eventBus.emit(ProviderService.Events.PROVIDER_SERVICE_DELETED, model);
+ProviderServiceHistory.addHook('afterDestroy', (model) => {
+    eventBus.emit(ProviderServiceHistory.Events.PROVIDER_SERVICE_HISTORY_DELETED, model);
 });
 
 /**
@@ -227,13 +202,50 @@ function checkMinMaxOfConditionFields(options, field, type = 'Number') {
 function filterConditions(params) {
     const options = omitBy(params, isNil);
     options.is_active = true;
-    options.status = ProviderService.Statuses.SUCCESS;
 
-    if (options.name) {
-        options.name = {
-            [Op.iLike]: `%${options.name}%`
+    if (options.order_types) {
+        options['transaction.operation.order.type'] = {
+            [Op.in]: options.order_types.split(',')
         };
     }
+    delete options.order_types;
+
+    if (options.order_code) {
+        options['transaction.operation.order.code'] = {
+            [Op.iLike]: `%${options.order_code}%`
+        };
+    }
+    delete options.order_code;
+
+    if (options.order_customer) {
+        options[Op.or] = [
+            {
+                'transaction.operation.order.customer.name': {
+                    [Op.iLike]: `%${options.order_customer}%`
+                }
+            },
+            {
+                'transaction.operation.order.customer.phone': {
+                    [Op.iLike]: `%${options.order_customer}%`
+                }
+            }
+        ];
+    }
+    delete options.order_customer;
+
+    if (options.order_stores) {
+        options['transaction.operation.order.store.id'] = {
+            [Op.in]: options.order_stores.split(',')
+        };
+    }
+    delete options.order_stores;
+
+    if (options.order_channels) {
+        options['transaction.operation.order.channel.name'] = {
+            [Op.in]: options.order_channels.split(',')
+        };
+    }
+    delete options.order_channels;
 
     if (options.statuses) {
         options.status = {
@@ -271,15 +283,15 @@ function sortConditions({ sort_by, order_by }) {
 /**
  * Transform postgres model to expose object
  */
-ProviderService.transform = (params) => {
+ProviderServiceHistory.transform = (params) => {
     const transformed = {};
     const fields = [
         'id',
-        'name',
         'group',
-        'secret',
-        'status',
+        'provider',
+        'transaction',
         'status_name',
+        'status',
         'created_by',
         'updated_by',
     ];
@@ -306,14 +318,11 @@ ProviderService.transform = (params) => {
 /**
  * Get all changed properties
  */
-ProviderService.getChangedProperties = ({ newModel, oldModel }) => {
+ProviderServiceHistory.getChangedProperties = ({ newModel, oldModel }) => {
     const changedProperties = [];
     const allChangableProperties = [
-        'name',
-        'group',
-        'secret',
         'status',
-        'status_name',
+        'status_name'
     ];
     if (!oldModel) {
         return allChangableProperties;
@@ -337,9 +346,9 @@ ProviderService.getChangedProperties = ({ newModel, oldModel }) => {
  * @public
  * @param {string} id
  */
-ProviderService.get = async (id) => {
+ProviderServiceHistory.get = async (id) => {
     try {
-        const data = await ProviderService.findOne({
+        const data = await ProviderServiceHistory.findOne({
             where: {
                 id,
                 is_active: true
@@ -348,7 +357,7 @@ ProviderService.get = async (id) => {
         if (!data) {
             throw new APIError({
                 status: httpStatus.NOT_FOUND,
-                message: 'Không tìm thấy đối tác này'
+                message: 'Không tìm thấy giao dịch này'
             });
         }
         return data;
@@ -364,24 +373,32 @@ ProviderService.get = async (id) => {
  * @param {number} limit - Limit number of records to be returned.
  * @returns {Promise<Supplider[]>}
  */
-ProviderService.list = async ({
-    name,
-    statuses,
+ProviderServiceHistory.list = async ({
     group,
+    statuses,
+    order_types,
+    order_code,
+    order_customer,
+    order_stores,
+    order_channels,
 
     // page
     sort_by,
     order_by,
     skip = 0,
-    limit = 20,
+    limit = 50,
 }) => {
     const options = filterConditions({
-        name,
+        group,
         statuses,
-        group
+        order_types,
+        order_code,
+        order_customer,
+        order_stores,
+        order_channels,
     });
     const sort = sortConditions({ sort_by, order_by });
-    return ProviderService.findAll({
+    return ProviderServiceHistory.findAll({
         where: options,
         order: [sort],
         offset: skip,
@@ -396,49 +413,52 @@ ProviderService.list = async ({
  * @param {number} limit - Limit number of records to be returned.
  * @returns {Promise<Number>}
  */
-ProviderService.totalRecords = ({
-    name,
+ProviderServiceHistory.totalRecords = ({
+    group,
     statuses,
-    group
+    order_types,
+    order_code,
+    order_customer,
+    order_stores,
+    order_channels,
 }) => {
     const options = filterConditions({
-        name,
+        group,
         statuses,
-        group
+        order_types,
+        order_code,
+        order_customer,
+        order_stores,
+        order_channels,
     });
-    return ProviderService.count({ where: options });
+    return ProviderServiceHistory.count({ where: options });
 };
 
-/**
- * getSecret
- *
- * @public
- * @param {string} group
- */
-ProviderService.getSecret = async (group) => {
+// check Code Webhook for Shopee
+ProviderServiceHistory.checkCodeWebhookShopee = async (shopId, code, group) => {
     try {
-        const data = await ProviderService.findOne({
+        const providerCheckCode = await ProviderServiceHistory.findOne({
             where: {
-                is_active: true,
                 group,
-                status: ProviderService.Statuses.ACTIVE
+                is_active: true,
+                'transaction.payload.shop_id': shopId,
+                'transaction.payload.code': code,
             }
         });
-
-        return data;
-    } catch (error) {
-        throw error;
+        return providerCheckCode;
+    } catch (ex) {
+        throw ex;
     }
 };
 
 /**
- * Filter only allowed fields from Provider Service
+ * Filter only allowed fields from ProviderServiceHistory
  *
  * @param {Object} params
  */
-ProviderService.filterParams = (params) => pick(params, PUBLIC_FIELDS);
+ProviderServiceHistory.filterParams = (params) => pick(params, PUBLIC_FIELDS);
 
 /**
- * @typedef ProviderService
+ * @typedef ProviderServiceHistory
  */
-export default ProviderService;
+export default ProviderServiceHistory;
