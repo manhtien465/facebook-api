@@ -8,6 +8,13 @@ exports.listPost = async (req, res, next) => {
         return ErrorHandler(ex, req, res, next);
     }
 };
+exports.connect = async (req, res, next) => {
+    try {
+        return res.json({ data: req.locals.data });
+    } catch (ex) {
+        return ErrorHandler(ex, req, res, next);
+    }
+};
 
 /**
  * confirm
@@ -28,53 +35,6 @@ exports.confirm = async (req, res, next) => {
  * receive
  */
 exports.recieve = async (req, res, next) => {
-    const body = req.body;
-    console.log('đã có webhook');
-    console.log(req.body);
-    // Checks this is an event from a page subscription
-    if (body.object === 'page') {
-    // Iterates over each entry - there may be multiple if batched
-        body.entry.forEach((entry) => {
-            if (entry.changes && entry.changes.length > 0) {
-                entry.changes.map((v) => {
-                    console.log(v);
-                    return null;
-                });
-            }
-            if (entry.messaging && entry.messaging.length > 0) {
-                entry.messaging.map((v) => {
-                    console.log(v);
-                    return null;
-                });
-            }
-        });
-    }
-    if (body.object === 'user') {
-        console.log('run in usser');
-        // Iterates over each entry - there may be multiple if batched
-        body.entry.forEach((entry) => {
-            console.log(entry);
-            if (entry.changed_fields && entry.changed_fields.length > 0) {
-                entry.changed_fields.map((v) => {
-                    console.log('ben trong', v);
-                    return null;
-                });
-            }
-        });
-    }
-    if (body.object === 'feed') {
-        console.log('run in usser');
-        // Iterates over each entry - there may be multiple if batched
-        body.entry.forEach((entry) => {
-            console.log(entry);
-            if (entry.changed_fields && entry.changed_fields.length > 0) {
-                entry.changed_fields.map((v) => {
-                    console.log('ben trong', v);
-                    return null;
-                });
-            }
-        });
-    }
     // Returns a '200 OK' response to all requests
     res.status(200).send('EVENT_RECEIVED');
     // } else {
