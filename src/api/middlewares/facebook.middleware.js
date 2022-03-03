@@ -44,6 +44,9 @@ exports.prepareWebhook = async (req, res, next) => {
         const body = req.body;
         console.log(req.body);
         console.log('đã có webhook');
+        if (req.body && req.body.data && req.body.data.sku_list) {
+            console.log(req.body.data.sku_list);
+        }
         const operation = [];
         let operationProduct = [];
         // Checks this is an event from a page subscription
